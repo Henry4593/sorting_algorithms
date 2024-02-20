@@ -1,124 +1,83 @@
 #include "sort.h"
-void heaplify(int *array, size_t size, size_t cur_idx, size_t s);
-void siftdown(int *array, size_t size, size_t heap_size, size_t root);
-void swap(int *array, size_t size, size_t e1, size_t e2);
 /**
- * heap_sort - sorts an array of integers in ascending order using the heap
- * sort algorithm.
- * @array: pointer to the unsorted array
- * @size: size of the array
+ * check_tree - maintains the max-heap property for a subtree in an array
+ * @array: the array representing the heap
+ * @size_init: the initial size of the array before sorting
+ * @size: the current size of the subtree being checked
+ * @idx_i: the index of the parent node in the subtree
  *
- * Description: Sorts the elements of `array` in ascending order using the heap
- * sort algorithm. Heap sort builds a max-heap from the input array, repeatedly
- * swaps the root element with the last element of the heap (reducing the heap
- * size), and sifts down the swapped element to maintain the max-heap property.
- * This process ensures that the largest element is placed at the end of the
- * sorted array in each iteration.
- *
- * Return: void (no return value, modifies the array in-place)
- */
-
-void heap_sort(int *array, size_t size)
-{
-	size_t heap_size = size;
-
-	if (!array || size < 2)
-		return;
-	heaplify(array, size, 0, size);
-	while (heap_size > 1)
-	{
-		swap(array, size, 0, heap_size - 1);
-		heap_size--;
-		siftdown(array, size, heap_size, 0);
-	}
-}
-
-/**
- * heaplify - converts a sub-array into a max-heap starting from a given index
- * @array: pointer to the array representing the heap
- * @size: size of the array
- * @cur_idx: index from which to start heapifying
- * @s: (unused) argument, can be ignored
- *
- * Description: Converts the sub-array `array[cur_idx:size-1]` into a max-heap
- * using the siftdown algorithm. This function starts at the parent of the last
- * element in the sub-array and sifts down each element to its correct position
- * in the max-heap. The `s` argument is unused and can be ignored.
+ * Description: Checks and fixes the max-heap property for the subtree rooted
+ * at index `idx_i` in the array. Assumes the subtree has `size` elements and
+ * was built from an initially larger array of size `size_init`. Uses
+ * `print_array` for visualization.
  *
  * Return: void (modifies the array in-place)
  */
 
-void heaplify(int *array, size_t size, size_t cur_idx, size_t s)
+void check_tree(int *array, size_t size_init, size_t size, size_t idx_i)
 {
-	size_t idx_i;
-	(void) s;
 
-	for (idx_i = (size - 2) / 2; idx_i >= cur_idx; idx_i--)
+	int n, branch1, branch2;
+	size_t br1, br2;
+
+	br1 = idx_i * 2 + 1;
+	br2 = br1 + 1;
+	branch1 = array[br1];
+	branch2 = array[br2];
+	if (((br1 < size) && (br2 < size) &&
+		(branch1 >= branch2 && branch1 > array[idx_i]))
+		|| ((br1 == size - 1) && branch1 > array[idx_i]))
 	{
-		siftdown(array, size, size - 1, idx_i);
-		if (idx_i == 0)
-			break;
+		n = array[idx_i];
+		array[idx_i] = branch1;
+		array[br1] = n;
+		print_array(array, size_init);
 	}
-}
-
-/**
- * siftdown - maintains the max-heap property of a sub-tree
- * @array: pointer to the array representing the heap
- * @size: size of the array
- * @heap_size: current size of the heap (sub-array of the array)
- * @root: index of the root node of the sub-tree
- *
- * Description: Maintains the max-heap property of a sub-tree rooted at index
- * `root` in the array `array`. This function assumes that the left and right
- * sub-trees of `root` are already max-heaps. It compares `root` with its
- * children and swaps it with the larger child if necessary, recursively
- * sifting down the larger child until the max-heap property is restored.
- *
- * Return: void (no return value, modifies the array in-place)
- */
-
-void siftdown(int *array, size_t size, size_t heap_size, size_t root)
-{
-	size_t target = root;
-	size_t left, right;
-
-	left = root * 2 + 1;
-	right = root * 2 + 2;
-	while (left < heap_size || right < heap_size)
+	else if ((br1 < size) && (br2 < size) &&
+		(branch2 > branch1 && branch2 > array[idx_i]))
 	{
-		if (left < heap_size && array[root] < array[left])
-			target = left;
-		if (right < heap_size && array[target] < array[right])
-			target = right;
-		if (target != root)
-			swap(array, size, root, target);
-		else
-			break;
-		root = target;
-		left = root * 2 + 1;
-		right = root * 2 + 2;
+		n = array[idx_i];
+		array[idx_i] = branch2;
+		array[br2] = n;
+		print_array(array, size_init);
 	}
+	if (br1 < size - 1)
+		check_tree(array, size_init, size, br1);
+	if (br2 < size - 1)
+		check_tree(array, size_init, size, br2);
 }
 /**
- * swap - swaps two elements in an array
- * @array: pointer to the array
- * @size: size of the array
- * @e1: index of the first element to swap
- * @e2: index of the second element to swap
+ * heap_sort - sorts an array of integers in ascending order using heap sort
+ * @array: the array to be sorted
+ * @size: the size of the array
  *
- * Description: Swaps the elements at indices `e1` and `e2` in the array
- * `array`. Assumes `e1` and `e2` are within the bounds of the array
- * (0 to `size-1`).
+ * Description: Sorts the array `array` of integers in ascending order using
+ * the heap sort algorithm. Builds a max-heap from the array, iteratively
+ * extracts the maximum element (now at the root), and places it at the end of
+ * the sorted portion of the array. Assumes `check_tree` and `print_array` are
+ * defined elsewhere.
  *
- * Return: void (no return value)
+ * Return: void (modifies the array in-place)
  */
 
-void swap(int *array, size_t size, size_t e1, size_t e2)
+void heap_sort(int *array, size_t size)
 {
-	int temp;
+	size_t idx, size_init = size;
+	int n;
 
-	temp = array[e1];
-	array[e1] = array[e2];
-	array[e2] = temp;
-	print_array(array, size);
+	if (!array)
+		return;
+	for (idx = 0; idx < size / 2 ; idx++)
+	{
+		check_tree(array, size_init, size, size / 2 - 1 - idx);
+	}
+	for (idx = 0; idx < size_init - 1; idx++)
+	{
+		n = array[0];
+		array[0] = array[size - 1 - idx];
+		array[size - 1 - idx] = n;
+		print_array(array, size_init);
+		check_tree(array, size_init, size - idx - 1, 0);
+	}
+
 }
